@@ -35,7 +35,7 @@ function fold_quadratic(p1::QuadraticPoly{T}, p2::QuadraticPoly{T}, alpha::T) wh
     )
 end
 
-include("./ligeritho.jl")
+include("./ligerito.jl")
 
 #TODO: remove claimed_sum after testing
 function sumcheck_prover(f::MultiLinearPoly{T}, claimed_sum::T) where T<:BinaryElem
