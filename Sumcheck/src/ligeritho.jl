@@ -1,5 +1,5 @@
 using BinaryFields
-struct SumcheckProverInstance{T} where T <: BinaryElem
+struct SumcheckProverInstance{T<:BinaryElem}
     f::MultiLinearPoly{T}
     basis_polys::Vector{MultiLinearPoly{T}}
     sum::T
@@ -105,7 +105,7 @@ function SumcheckVerifierInstance(b1::MultiLinearPoly{T}, h1::T, transcript::Vec
     return verifier
 end 
 
-function start!(verifier::DILSumcheckVerifierInstance{T}) where T
+function start!(verifier::SumcheckVerifierInstance{T}) where T
     g0, g1, g2 = read_tr!(verifier)
     @assert g0 + g1 == verifier.sum
 
@@ -122,20 +122,7 @@ function fold!(verifier::SumcheckVerifierInstance{T}, r::T) where T <: BinaryEle
     verifier.sum = eval_quadratic(g, r)
 end
 
-function evaluate_basis_polys(verifier::DILSumcheckVerifierInstance{T}) where T <: BinaryElem
-    b_eval = partial_eval(verifier.basis_polys[1], verifier.ris).evals[1]
-
-    for i in 2:length(verifier.basis_polys)
-        n = verifier.basis_polys[i].n
-        eval_pts = verifier.ris[end - n + 1:end]
-        bi_eval = partial_eval(verifier.basis_polys[i], eval_pts).evals[1]
-        b_eval += verifier.separation_challenges[i] * bi_eval
-    end
-
-    return b_eval
-end
-
-function introduce_new!(verifier::DILSumcheckVerifierInstance{T}, bi::MultiLinearPoly{T}, h::T) where T
+function introduce_new!(verifier::SumcheckVerifierInstance{T}, bi::MultiLinearPoly{T}, h::T) where T
     g0, g1, g2 = read_tr!(verifier)
     @assert g0 + g1 == h
 
@@ -143,12 +130,12 @@ function introduce_new!(verifier::DILSumcheckVerifierInstance{T}, bi::MultiLinea
     verifier.to_glue = quadratic_from_evals(g0, g1, g2)
 end
 
-function glue!(verifier::DILSumcheckVerifierInstance{T}, alpha::T) where T
+function glue!(verifier::SumcheckVerifierInstance{T}, alpha::T) where T
     push!(verifier.separation_challenges, alpha)
     verifier.running_poly = fold_quadratic(verifier.running_poly, verifier.to_glue, alpha)
 end
 
-function evaluate_basis_polys(verifier::DILSumcheckVerifierInstance{T}, r::T) where T
+function evaluate_basis_polys(verifier::SumcheckVerifierInstance{T}, r::T) where T
     push!(verifier.ris, r)
     b_eval = partial_eval(verifier.basis_polys[1], verifier.ris).evals[1]
 
@@ -162,7 +149,7 @@ function evaluate_basis_polys(verifier::DILSumcheckVerifierInstance{T}, r::T) wh
     return b_eval
 end
 
-function verify(verifier::DILSumcheckVerifierInstance{T}, r::T, f_eval::T) where T
+function verify(verifier::SumcheckVerifierInstance{T}, r::T, f_eval::T) where T
     verifier.sum = eval_quadratic(verifier.running_poly, r)
     basis_evals = evaluate_basis_polys(verifier, r)
     return f_eval * basis_evals == verifier.sum

@@ -7,8 +7,10 @@ using BinaryFields, MultilinearPoly
 
 include("./ligeritho.jl")
 
+export QuadraticPoly
+
 # aX^2 + bX + c
-struct QuadraticPoly{T} where T <: BinaryElem
+struct QuadraticPoly{T<:BinaryElem}
     a::T
     b::T
     c::T

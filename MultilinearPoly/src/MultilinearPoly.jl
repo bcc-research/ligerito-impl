@@ -1,6 +1,6 @@
 module MultilinearPoly
 
-export MultiLinearPoly, partial_eval_at_0, partial_eval_at_1, partial_eval, eval_012, eval_013_product, quadratic_from_evals, eval_quadratic
+export MultiLinearPoly, partial_eval_at_0, partial_eval_at_1, partial_eval, eval_012, eval_013_product, quadratic_from_evals, eval_quadratic, sum
 
 using BinaryFields
 
