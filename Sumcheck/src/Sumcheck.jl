@@ -1,11 +1,9 @@
 module Sumcheck
 
 export sumcheck_prover, sumcheck_verifier, double_sumcheck_prover, double_sumcheck_verifier
-export SumcheckProverInstance, SumcheckVerifierInstance
+export SumcheckProverInstance, SumcheckVerifierInstance, fold!, glue!, introduce_new!, verify
 
 using BinaryFields, MultilinearPoly
-
-include("./ligeritho.jl")
 
 export QuadraticPoly
 
@@ -36,6 +34,8 @@ function fold_quadratic(p1::QuadraticPoly{T}, p2::QuadraticPoly{T}, alpha::T) wh
         p1.c + alpha * p2.c,
     )
 end
+
+include("./ligeritho.jl")
 
 #TODO: remove claimed_sum after testing
 function sumcheck_prover(f::MultiLinearPoly{T}, claimed_sum::T) where T<:BinaryElem

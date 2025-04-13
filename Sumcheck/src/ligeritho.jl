@@ -1,5 +1,5 @@
 using BinaryFields
-struct SumcheckProverInstance{T<:BinaryElem}
+mutable struct SumcheckProverInstance{T<:BinaryElem}
     f::MultiLinearPoly{T}
     basis_polys::Vector{MultiLinearPoly{T}}
     sum::T
@@ -79,7 +79,7 @@ function fold!(inst::SumcheckProverInstance{T}, r::T) where T <: BinaryElem
     push!(inst.transcript, (s0, s1, s2))
 end
 
-struct SumcheckVerifierInstance{T}
+mutable struct SumcheckVerifierInstance{T}
     basis_polys::Vector{MultiLinearPoly{T}}
     separation_challenges::Vector{T}
     sum::T
@@ -93,9 +93,9 @@ end
 
 
 function read_tr!(verifier::SumcheckVerifierInstance{T}) where T <: BinaryElem
-    @assert verifier.index ≤ length(verifier.transcript) "Transcript exhausted"
-    g0, g1, g2 = verifier.transcript[verifier.index]
-    verifier.index += 1
+    @assert verifier.tr_reader ≤ length(verifier.transcript) "Transcript exhausted"
+    g0, g1, g2 = verifier.transcript[verifier.tr_reader]
+    verifier.tr_reader += 1
     return g0, g1, g2
 end
 
@@ -115,11 +115,12 @@ end
 
 function fold!(verifier::SumcheckVerifierInstance{T}, r::T) where T <: BinaryElem
     push!(verifier.ris, r)
+    verifier.sum = eval_quadratic(verifier.running_poly, r)
+
     g0, g1, g2 = read_tr!(verifier)
     @assert g0 + g1 == verifier.sum
 
-    g = quadratic_from_evals(g0, g1, g2)
-    verifier.sum = eval_quadratic(g, r)
+    verifier.running_poly = quadratic_from_evals(g0, g1, g2)
 end
 
 function introduce_new!(verifier::SumcheckVerifierInstance{T}, bi::MultiLinearPoly{T}, h::T) where T
