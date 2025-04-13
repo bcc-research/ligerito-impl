@@ -6,13 +6,15 @@ using BinaryFields
 
 struct MultiLinearPoly{T<:BinaryElem}
     evals::Vector{T}
-    function MultiLinearPoly(evals::Vector{T}) where T
-        n = Int(log2(length(evals)))
-        if 2^n != length(evals)
-            error("Length of evals must be a power of 2")
-        end
-        new{T}(evals)
+    n::Int
+end
+
+function MultiLinearPoly(evals::Vector{T}) where T
+    n = Int(log2(length(evals)))
+    if 2^n != length(evals)
+        error("Length of evals must be a power of 2")
     end
+    MultiLinearPoly{T}(evals, n)
 end
 
 function Base.sum(p::MultiLinearPoly)

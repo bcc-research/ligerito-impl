@@ -22,9 +22,9 @@ function _start!(inst::SumcheckProverInstance)
 end
 
 function introduce_new!(inst::SumcheckProverInstance, bi::MultiLinearPoly{T}, h::T) where T <: BinaryElem
-    s0, s1, s2 = eval_012_product(inst.f, bi)
+    s0, s1, s2 = eval_013_product(inst.f, bi)
     push!(inst.transcript, (s0, s1, s2))
-    push!(inst.basis_polys, bi)
+
     @assert s0 + s1 == h
     inst.to_be_glued = bi
 end
