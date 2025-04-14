@@ -54,8 +54,9 @@ end
         c_at_x = sum(c_cfs .* basis)
 
         # resize in-place
-        resize!(a_cfs, 2^m)
-        resize!(b_cfs, 2^m)
+        # this is now handled internally
+        # resize!(a_cfs, 2^m)
+        # resize!(b_cfs, 2^m)
 
         a_enc = encode_non_systematic!(rs, a_cfs)
         b_enc = encode_non_systematic!(rs, b_cfs)

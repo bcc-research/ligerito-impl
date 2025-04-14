@@ -78,19 +78,25 @@ function encode!(rs::ReedSolomonEncoding{T}, v; verbose=false, fill_zeros=true, 
     v
 end
 
-function encode_non_systematic!(rs::ReedSolomonEncoding{T}, v; verbose=false, fill_zeros=true) where T
-    @assert length(v) == block_length(rs)
+function encode_non_systematic!(rs::ReedSolomonEncoding{T}, message; verbose=false, fill_zeros=true) where T
     @assert !isnothing(rs.twiddles)
     @assert !isnothing(rs.pis)
+    @assert length(message) == message_length(rs)
 
-    cfs = @view v[1:message_length(rs)]
+    message_coeffs = zeros(eltype(message), block_length(rs))
+    message_coeffs[1:message_length(rs)] .= message
+
+    # @assert length(v) == block_length(rs)
+
+
+    cfs = @view message_coeffs[1:message_length(rs)]
     cfs .*= rs.pis # scale with pis to get correct evaluations after performing fft  
-    if fill_zeros
-        v[message_length(rs)+1:end] .= eltype(v)(0)
-    end
+    # if fill_zeros
+    #     v[message_length(rs)+1:end] .= eltype(v)(0)
+    # end
 
-    fft!(v, twiddles=rs.twiddles; verbose)
-    v
+    fft!(message_coeffs, twiddles=rs.twiddles; verbose)
+    message_coeffs
 end
 
 function reed_solomon(::Type{T}, message_length, block_length) where T
