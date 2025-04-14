@@ -1,7 +1,7 @@
 module Sumcheck
 
 export sumcheck_prover, sumcheck_verifier, double_sumcheck_prover, double_sumcheck_verifier
-export SumcheckProverInstance, SumcheckVerifierInstance, fold!, glue!, introduce_new!, verify
+export SumcheckProverInstance, SumcheckVerifierInstance, fold!, glue!, introduce_new!, verify, verify_partial
 
 using BinaryFields, MultilinearPoly
 

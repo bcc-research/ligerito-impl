@@ -105,7 +105,7 @@ function SumcheckVerifierInstance(b1::MultiLinearPoly{T}, h1::T, transcript::Vec
     return verifier
 end 
 
-function start!(verifier::SumcheckVerifierInstance{T}) where T
+function start!(verifier::SumcheckVerifierInstance{T}) where T <: BinaryElem
     g0, g1, g2 = read_tr!(verifier)
     @assert g0 + g1 == verifier.sum
 
@@ -123,7 +123,7 @@ function fold!(verifier::SumcheckVerifierInstance{T}, r::T) where T <: BinaryEle
     verifier.running_poly = quadratic_from_evals(g0, g1, g2)
 end
 
-function introduce_new!(verifier::SumcheckVerifierInstance{T}, bi::MultiLinearPoly{T}, h::T) where T
+function introduce_new!(verifier::SumcheckVerifierInstance{T}, bi::MultiLinearPoly{T}, h::T) where T <: BinaryElem
     g0, g1, g2 = read_tr!(verifier)
     @assert g0 + g1 == h
 
@@ -150,8 +150,35 @@ function evaluate_basis_polys(verifier::SumcheckVerifierInstance{T}, r::T) where
     return b_eval
 end
 
-function verify(verifier::SumcheckVerifierInstance{T}, r::T, f_eval::T) where T
+function verify(verifier::SumcheckVerifierInstance{T}, r::T, f_eval::T) where T <: BinaryElem
     verifier.sum = eval_quadratic(verifier.running_poly, r)
     basis_evals = evaluate_basis_polys(verifier, r)
     return f_eval * basis_evals == verifier.sum
+end
+
+function evaluate_basis_polys_partially(verifier::SumcheckVerifierInstance{T}, r::T, k::Int) where T <: BinaryElem
+    push!(verifier.ris, r)
+
+    acc = partial_eval(verifier.basis_polys[1], verifier.ris).evals
+    for i in 2:length(verifier.basis_polys)
+        n = verifier.basis_polys[i].n
+        eval_pts = verifier.ris[end - n + k + 1:end]
+
+        bi_evals = partial_eval(verifier.basis_polys[i], eval_pts).evals
+        α = verifier.separation_challenges[i]
+
+        @assert length(acc) == length(bi_evals)
+        acc .= acc .+ α .* bi_evals
+    end
+
+    return acc
+end
+
+function verify_partial(verifier::SumcheckVerifierInstance{T}, r::T, f_partial_eval::Vector{T}) where T <: BinaryElem
+    k = Int(log2(length(f_partial_eval)))
+    verifier.sum = eval_quadratic(verifier.running_poly, r)
+    basis_evals = evaluate_basis_polys_partially(verifier, r, k)
+
+    @assert length(f_partial_eval) == length(basis_evals)
+    return sum(f_partial_eval .* basis_evals) == verifier.sum
 end
