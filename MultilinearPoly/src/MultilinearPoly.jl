@@ -22,12 +22,23 @@ function Base.sum(p::MultiLinearPoly)
 end
 
 # [Lemma 4.3. from: Proofs, Arguments, and Zero-Knowledge, Justin Thaler] 
-function partial_eval(p::MultiLinearPoly{T}, r::Vector{T}) where T<:BinaryElem
-    partial_evals = copy(p.evals)
-    len = length(partial_evals)
-    ONE = one(eltype(partial_evals))
+function partial_eval(p::MultiLinearPoly{T}, r::Vector{U}) where {T, U <:BinaryElem}
+    if length(r) == 0
+        return p
+    end
 
-    for ri in r
+    partial_evals = Vector{U}(undef, div(length(p.evals), 2))
+    len = length(partial_evals)
+    ONE = one(U)
+
+    ri = r[1]
+    for i in 1:len
+        left = p.evals[i]
+        right = p.evals[i + len]
+        partial_evals[i] = (ONE + ri) * left + ri * right
+    end
+
+    for ri in r[2:end]
         len = div(len, 2)
 
         for i in 1:len
@@ -38,6 +49,7 @@ function partial_eval(p::MultiLinearPoly{T}, r::Vector{T}) where T<:BinaryElem
     end
     return MultiLinearPoly(partial_evals[1:len])
 end
+
 
 function partial_eval_at_0(p::MultiLinearPoly{T}) where T<:BinaryElem
     half = div(length(p.evals), 2)
