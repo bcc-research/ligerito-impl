@@ -18,6 +18,8 @@ Base.adjoint(x::T) where T <: BinaryElem = x
 Base.conj(x::T) where T <: BinaryElem = x
 Random.rand(rng::Random.AbstractRNG, ::Random.SamplerType{T}) where T <: BinaryElem = T(rand(rng, poly_type(T)))
 
+Base.sizeof(v::Vector{Vector{T}}) where {T<:BinaryElem} = sum(sizeof, v)
+
 macro define_binary_elem(uint_size)
     gf2_elem_type = Symbol("BinaryElem$(uint_size)")
     poly_type = Symbol("BinaryPoly$(uint_size)")
