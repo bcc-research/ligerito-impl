@@ -52,13 +52,12 @@ end
 k = 12
 glues = [2, 5, 9]
 bs = [random_poly(BinaryElem16, k - gi) for gi in glues]
-separation_challenges = rand(BinaryElem16, length(glues))
 
 f = random_poly(BinaryElem16, k)
 b1 = random_poly(BinaryElem16, k)
 h = inner(f, b1, rs)
 
-# store randomness for partial evaluations here
+# store randomness for partial evaluations here for an oracle access to the f
 rs = Vector{BinaryElem16}()
 
 let 
