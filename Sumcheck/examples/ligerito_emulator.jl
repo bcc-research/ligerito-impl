@@ -3,27 +3,28 @@ using BinaryFields, MultilinearPoly, SHA, Random
 # define dummy FS 
 mutable struct FS
     ctx::SHA256_CTX
+    counter::UInt32
 end
 
 function FS(seed::Int)
     ctx = SHA.SHA256_CTX()
-    buf = Vector{UInt8}(undef, 8)
-    unsafe_store!(Ptr{UInt64}(pointer(buf)), UInt64(seed))
-    SHA.update!(ctx, buf)
-    return FS(ctx)
+    SHA.update!(ctx, reinterpret(UInt8, [seed]))
+    return FS(ctx, 0)
 end
 
 function absorb!(fs::FS, s::QuadraticEvals)
     SHA.update!(fs.ctx, reinterpret(UInt8, [s.e0, s.e1, s.e2]))
 end
 
-function squeeze_rng(fs::FS)::MersenneTwister
+function squeeze_rng!(fs::FS)::MersenneTwister
+    SHA.update!(fs.ctx, reinterpret(UInt8, [fs.counter]))
+    fs.counter += 1
     digest = SHA.digest!(deepcopy(fs.ctx))
     return MersenneTwister(reinterpret(UInt32, digest))
 end
 
 function get_field(fs::FS, ::Type{T}) where T <: BinaryElem
-    rng = squeeze_rng(fs)
+    rng = squeeze_rng!(fs)
     return rand(rng, T)
 end
 
@@ -31,17 +32,6 @@ end
 function random_poly(::Type{T}, k::Int) where T <: BinaryElem
     evals = rand(T, 2^k)
     return MultiLinearPoly(evals)
-end
-
-function inner(f::MultiLinearPoly{T}, b::MultiLinearPoly{T}, rs::Vector{T}) where T <: BinaryElem
-    n1 = f.n
-    n2 = b.n
-
-    eval_pts = rs[1:n1 - n2]
-    fp = partial_eval(f, eval_pts)
-    @assert fp.n == b.n
-
-    return sum(fp.evals .* b.evals)
 end
 
 function inner_from_running(prover::SumcheckProverInstance{T}, b::MultiLinearPoly{T}) where T <: BinaryElem
@@ -55,7 +45,7 @@ bs = [random_poly(BinaryElem16, k - gi) for gi in glues]
 
 f = random_poly(BinaryElem16, k)
 b1 = random_poly(BinaryElem16, k)
-h = inner(f, b1, rs)
+h = sum(f.evals .* b1.evals)
 
 # store randomness for partial evaluations here for an oracle access to the f
 rs = Vector{BinaryElem16}()
@@ -110,7 +100,6 @@ let
         if gl_idx <= length(glues) && folds == glues[gl_idx]
             bi = bs[gl_idx]
             hi = hs[gl_idx]
-            # alpha = separation_challenges[gl_idx]
 
             gl_i = introduce_new!(verifier, bi, hi)
             absorb!(fs_verifier, gl_i)
