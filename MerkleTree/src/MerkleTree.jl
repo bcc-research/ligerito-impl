@@ -58,7 +58,7 @@ function build_merkle_tree(leaves)
 end
 
 struct MerkleRoot
-    root::Union{Vector{UInt8}, Nothing}
+    root::Vector{UInt8}
 end
 
 sizeof(x::MerkleRoot) = sizeof(x.root)
@@ -161,11 +161,7 @@ function verify_ith_layer!(layer, queries, curr_cnt, proof, proof_cnt)
     return (next_cnt, proof_cnt)
 end
 
-function verify(root::MerkleRoot, batched_proof::BatchedMerkleProof; depth, leaves, leaf_indices)
-    if root.root === nothing
-        return false
-    end
-    
+function verify(root::MerkleRoot, batched_proof::BatchedMerkleProof; depth, leaves, leaf_indices)    
     proof = copy(batched_proof.proof)
     layer = [hash_leaf(leaf) for leaf in leaves]
     queries = copy(leaf_indices)

@@ -34,7 +34,7 @@ h = inner(f, b1, rs)
 
 let 
     # === PROVER ===
-    prover = SumcheckProverInstance(f, b1, h)
+    prover, _ = SumcheckProverInstance(f, b1, h)
     folds = 0
     gl_idx = 1
     hs = BinaryElem16[]
@@ -61,7 +61,7 @@ let
     # === VERIFIER ===
     folds = 0
     gl_idx = 1
-    verifier = SumcheckVerifierInstance(b1, h, copy(prover.transcript))
+    verifier, _ = SumcheckVerifierInstance(b1, h, copy(prover.transcript))
 
     # verifier folds rs - 1 times before the final check
     for i in 1:(length(rs) - 1)

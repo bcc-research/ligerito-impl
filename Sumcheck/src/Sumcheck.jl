@@ -5,7 +5,17 @@ export SumcheckProverInstance, SumcheckVerifierInstance, fold!, glue!, introduce
 
 using BinaryFields, MultilinearPoly
 
-export QuadraticPoly
+export QuadraticPoly, QuadraticEvals
+
+struct QuadraticEvals{T<:BinaryElem}
+    e0::T
+    e1::T
+    e2::T
+end
+
+# function QuadraticEvals(e0::T, e1::T, e2::T) where T <: BinaryElem
+#     return QuadraticEvals{T}(e0, e1, e2)
+# end
 
 # aX^2 + bX + c
 struct QuadraticPoly{T<:BinaryElem}

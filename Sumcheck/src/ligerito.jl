@@ -11,14 +11,15 @@ function SumcheckProverInstance(f::MultiLinearPoly{T}, b1::MultiLinearPoly{T}, h
     basis_polys = [b1]
     transcript = NTuple{3, T}[]
     instance = SumcheckProverInstance(f, basis_polys, h1, transcript, nothing)
-    _start!(instance)
-    return instance
+    s1 = _start!(instance)
+    return (instance, s1)
 end
 
 function _start!(inst::SumcheckProverInstance)
     s0, s1, s2 = eval_013_product(inst.f, inst.basis_polys[1])
     push!(inst.transcript, (s0, s1, s2))
     @assert s0 + s1 == inst.sum
+    return QuadraticEvals(s0, s1, s2)
 end
 
 function introduce_new!(inst::SumcheckProverInstance, bi::MultiLinearPoly{T}, h::T) where T <: BinaryElem
@@ -27,6 +28,8 @@ function introduce_new!(inst::SumcheckProverInstance, bi::MultiLinearPoly{T}, h:
 
     @assert s0 + s1 == h
     inst.to_be_glued = bi
+
+    return QuadraticEvals(s0, s1, s2)
 end
 
 function glue!(inst::SumcheckProverInstance{T}, alpha::T) where T
@@ -77,6 +80,8 @@ function fold!(inst::SumcheckProverInstance{T}, r::T) where T <: BinaryElem
 
     s0, s1, s2 = eval_01x_product(inst)
     push!(inst.transcript, (s0, s1, s2))
+
+    return QuadraticEvals(s0, s1, s2)
 end
 
 mutable struct SumcheckVerifierInstance{T}
@@ -101,15 +106,16 @@ end
 
 function SumcheckVerifierInstance(b1::MultiLinearPoly{T}, h1::T, transcript::Vector{NTuple{3, T}}) where T <: BinaryElem
     verifier = SumcheckVerifierInstance([b1], [one(T)], h1, copy(transcript), T[], 1, nothing, nothing)
-    start!(verifier)
-    return verifier
+    g1 = _start!(verifier)
+    return (verifier, g1)
 end 
 
-function start!(verifier::SumcheckVerifierInstance{T}) where T <: BinaryElem
+function _start!(verifier::SumcheckVerifierInstance{T}) where T <: BinaryElem
     g0, g1, g2 = read_tr!(verifier)
     @assert g0 + g1 == verifier.sum
 
     verifier.running_poly = quadratic_from_evals(g0, g1, g2)
+    return QuadraticEvals(g0, g1, g2)
 end
 
 
@@ -121,6 +127,7 @@ function fold!(verifier::SumcheckVerifierInstance{T}, r::T) where T <: BinaryEle
     @assert g0 + g1 == verifier.sum
 
     verifier.running_poly = quadratic_from_evals(g0, g1, g2)
+    return QuadraticEvals(g0, g1, g2)
 end
 
 function introduce_new!(verifier::SumcheckVerifierInstance{T}, bi::MultiLinearPoly{T}, h::T) where T <: BinaryElem
@@ -129,6 +136,8 @@ function introduce_new!(verifier::SumcheckVerifierInstance{T}, bi::MultiLinearPo
 
     push!(verifier.basis_polys, bi)
     verifier.to_glue = quadratic_from_evals(g0, g1, g2)
+
+    return QuadraticEvals(g0, g1, g2)
 end
 
 function glue!(verifier::SumcheckVerifierInstance{T}, alpha::T) where T
