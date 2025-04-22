@@ -27,7 +27,11 @@ function build_merkle_tree(leaves)
         return []
     end
 
-    current_layer = [hash_leaf(leaf) for leaf in leaves]
+    # current_layer = [hash_leaf(leaf) for leaf in leaves]
+    current_layer = Vector{Vector{UInt8}}(undef, length(leaves))
+    Threads.@threads for i in eachindex(leaves)
+        current_layer[i] = hash_leaf(leaves[i])
+    end
     tree = [current_layer]
 
     while length(current_layer) > 1
