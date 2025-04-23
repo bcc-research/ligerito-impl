@@ -3,11 +3,32 @@ module MerkleTree
 using SHA
 import Base: sizeof
 
-export build_merkle_tree, get_root, get_depth
+export build_merkle_tree, get_root, get_depth, build_merkle_tree_fast
 export CompleteMerkleTree, MerkleRoot, BatchedMerkleProof
 export prove, verify
 
-# XXX: make all proofs into reasonable objects with good ergonomics
+function threaded_each(nt::Int, xs::AbstractVector, f::Function; threshold::Int=256)
+    n = length(xs)
+
+    if n <= threshold || nt == 1
+        @inbounds for i in 1:n
+            f(xs, i)
+        end
+        return
+    end
+
+    chunk_size = ceil(Int, n / nt)
+    Threads.@sync for t in 1:nt
+        Threads.@spawn begin
+            start_idx = (t - 1) * chunk_size + 1
+            end_idx = min(t * chunk_size, n)
+
+            @inbounds for i in start_idx:end_idx
+                f(xs, i)
+            end
+        end
+    end
+end
 
 # for now simply assume that isbitstype(T) = true
 hash_leaf(leaf) = sha256(reinterpret(UInt8, leaf))
@@ -21,7 +42,57 @@ struct CompleteMerkleTree
     tree::Vector{Vector{Vector{UInt8}}}
 end
 
-function build_merkle_tree(leaves)
+function build_merkle_tree_fast(leaves::AbstractVector)
+    @assert is_power_of_two(length(leaves))
+    if isempty(leaves)
+        return []
+    end
+
+    nt = Threads.nthreads()
+    n = length(leaves)
+
+    layer0 = Vector{Vector{UInt8}}(undef, n)
+    f = (curr, i) -> curr[i] = hash_leaf(leaves[i])
+    threaded_each(nt, layer0, f)
+
+    tree = [layer0]
+
+    while length(tree[end]) > 1
+        parent_layer = tree[end]
+        parent_len = length(parent_layer)
+        child_len = parent_len ÷ 2
+        child_layer = Vector{Vector{UInt8}}(undef, child_len)
+
+        if n <= 256 || nt == 1
+            for i in 1:child_len
+                left = current_layer[2i - 1]
+                right = current_layer[2i]
+                next_layer[i] = hash_siblings(left, right)
+            end
+        else 
+            chunk_size = ceil(Int, child_len / nt)
+            Threads.@sync for t in 1:nt
+                Threads.@spawn begin
+                    start_idx = (t - 1) * chunk_size + 1
+                    end_idx = min(t * chunk_size, child_len)
+        
+                    @inbounds for i in start_idx:end_idx
+                        left = parent_layer[2i - 1]
+                        right = parent_layer[2i]
+                        child_layer[i] = hash_siblings(left, right)
+                    end
+                end
+            end
+        end
+
+        push!(tree, child_layer)
+    end
+
+    return CompleteMerkleTree(tree)
+end
+
+
+function build_merkle_tree(leaves::AbstractVector)
     @assert is_power_of_two(length(leaves))
     if isempty(leaves)
         return []
