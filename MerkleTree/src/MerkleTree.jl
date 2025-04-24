@@ -63,11 +63,11 @@ function build_merkle_tree_fast(leaves::AbstractVector)
         child_len = parent_len ÷ 2
         child_layer = Vector{Vector{UInt8}}(undef, child_len)
 
-        if n <= 256 || nt == 1
+        if child_len <= 64 || nt == 1
             for i in 1:child_len
-                left = current_layer[2i - 1]
-                right = current_layer[2i]
-                next_layer[i] = hash_siblings(left, right)
+                left = parent_layer[2i - 1]
+                right = parent_layer[2i]
+                child_layer[i] = hash_siblings(left, right)
             end
         else 
             chunk_size = ceil(Int, child_len / nt)
