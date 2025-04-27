@@ -4,6 +4,7 @@ authors = ["Andrija <akinovak@gmail.com>", "guille <guille@angeris.net>"]
 version = "0.1.0"
 
 [deps]
+BCCSHA = "aa8e919c-243c-51af-8825-aaa63cd721ce"
 SHA = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 
 [compat]

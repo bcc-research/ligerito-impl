@@ -2,7 +2,12 @@
 
 julia_version = "1.11.2"
 manifest_format = "2.0"
-project_hash = "dc57c4a69a5d36a329a37b6ee5e34623b7389599"
+project_hash = "6497f160e872b2d70e74488790bc235ea14a72d5"
+
+[[deps.BCCSHA]]
+path = "../../BCCSHA"
+uuid = "aa8e919c-243c-51af-8825-aaa63cd721ce"
+version = "0.7.0"
 
 [[deps.SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
