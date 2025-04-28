@@ -250,7 +250,7 @@ function eval_sk_at_vks(n::Int, ::Type{T}) where T
     return sks_vks
 end
 
-function basis_next_subspace!(basis::Vector{T}, k::Int, sk_at_x::T) where T <: BinaryElem
+function basis_next_subspace!(basis::Vector{U}, k::Int, sk_at_x::T) where {T, U <: BinaryElem}
     current_len = 2^k
     for i in 1:current_len
         basis[i + current_len] = sk_at_x * basis[i]
@@ -268,6 +268,24 @@ function evaluate_basis(basis_len::Int, sks_vks::Vector{T}, x::T) where T
 
     basis = Vector{T}(undef, basis_len)
     basis[1] = one(T)
+    for i in 1:num_subspaces
+        basis_next_subspace!(basis, i - 1, sks_at_x[i])
+    end
+
+    return basis
+end
+
+function evaluate_scaled_basis(basis_len::Int, sks_vks::Vector{T}, x::T, alpha::U) where {T, U <: BinaryElem}
+    num_subspaces = Int(log2(basis_len))
+
+    sks_at_x = Vector{T}(undef, num_subspaces)
+    sks_at_x[1] = x
+    for i in 2:num_subspaces
+        sks_at_x[i] = next_s(sks_at_x[i - 1], sks_vks[i - 1])
+    end
+
+    basis = Vector{U}(undef, basis_len)
+    basis[1] = alpha
     for i in 1:num_subspaces
         basis_next_subspace!(basis, i - 1, sks_at_x[i])
     end
