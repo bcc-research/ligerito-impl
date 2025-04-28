@@ -1,6 +1,7 @@
 module MultilinearPoly
 
 export MultiLinearPoly, partial_eval_at_0, partial_eval_at_1, partial_eval, eval_012, eval_013_product, quadratic_from_evals, eval_quadratic, sum
+export partial_evals_parallel
 
 using BinaryFields
 
@@ -19,6 +20,56 @@ end
 
 function Base.sum(p::MultiLinearPoly)
     return sum(p.evals)
+end
+
+# [Lemma 4.3. from: Proofs, Arguments, and Zero-Knowledge, Justin Thaler]
+function partial_eval(p::MultiLinearPoly{T}, rs::Vector{T}) where T <: BinaryElem
+    partial_evals = parallel_partial_eval(p.evals, rs[1]) 
+    n = length(partial_evals)
+    for r in rs[2:end]
+        n = div(n, 2)
+        parallel_partial_eval_inplace!(partial_evals, n, r)
+    end
+
+    return MultiLinearPoly(partial_evals[1:n])
+end
+
+function parallel_partial_eval(evals::Vector{T}, r::T) where T <: BinaryElem
+    partial_evals = Vector{T}(undef, div(length(evals), 2))
+    n = length(partial_evals)
+
+    nt = Threads.nthreads() 
+    chunk_size = ceil(Int, n / nt)
+    ONE = one(T)
+
+    Threads.@sync for t in 1:nt
+        Threads.@spawn begin
+            start_idx = (t - 1) * chunk_size + 1
+            end_idx = min(t * chunk_size, n)
+
+            @inbounds for i in start_idx:end_idx
+                partial_evals[i] = (ONE + r) * evals[i] + r * evals[i + n]
+            end
+        end
+    end
+    return partial_evals
+end
+
+function parallel_partial_eval_inplace!(evals::Vector{T}, n::Int, r::T) where T <: BinaryElem
+    nt = Threads.nthreads() 
+    chunk_size = ceil(Int, n / nt)
+    ONE = one(T)
+
+    Threads.@sync for t in 1:nt
+        Threads.@spawn begin
+            start_idx = (t - 1) * chunk_size + 1
+            end_idx = min(t * chunk_size, n)
+
+            @inbounds for i in start_idx:end_idx
+                evals[i] = (ONE + r) * evals[i] + r * evals[i + n]
+            end
+        end
+    end
 end
 
 # [Lemma 4.3. from: Proofs, Arguments, and Zero-Knowledge, Justin Thaler] 
