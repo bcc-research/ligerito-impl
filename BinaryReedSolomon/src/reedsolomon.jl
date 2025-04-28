@@ -78,25 +78,25 @@ function encode!(rs::ReedSolomonEncoding{T}, v; verbose=false, fill_zeros=true, 
     v
 end
 
-function encode_non_systematic!(rs::ReedSolomonEncoding{T}, message; verbose=false, fill_zeros=true) where T
+# assume that columns are already zero padded
+function encode_non_systematic!(rs::ReedSolomonEncoding{T}, message; verbose=false, fill_zeros=true) where T <: BinaryElem
     @assert !isnothing(rs.twiddles)
     @assert !isnothing(rs.pis)
-    @assert length(message) == message_length(rs)
+    @assert length(message) == block_length(rs)
 
-    message_coeffs = zeros(eltype(message), block_length(rs))
-    message_coeffs[1:message_length(rs)] .= message
+    # message_coeffs = zeros(eltype(message), block_length(rs))
+    # message_coeffs[1:message_length(rs)] .= message
 
     # @assert length(v) == block_length(rs)
 
 
-    cfs = @view message_coeffs[1:message_length(rs)]
+    cfs = @view message[1:message_length(rs)]
     cfs .*= rs.pis # scale with pis to get correct evaluations after performing fft  
     # if fill_zeros
     #     v[message_length(rs)+1:end] .= eltype(v)(0)
     # end
 
-    fft!(message_coeffs, twiddles=rs.twiddles; verbose)
-    message_coeffs
+    fft!(message, twiddles=rs.twiddles; verbose)
 end
 
 function reed_solomon(::Type{T}, message_length, block_length) where T
