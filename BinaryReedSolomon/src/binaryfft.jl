@@ -293,6 +293,25 @@ function evaluate_scaled_basis(basis_len::Int, sks_vks::Vector{T}, x::T, alpha::
     return basis
 end
 
+# reuses allocated memory for sks_at_x and basis
+function evaluate_scaled_basis_inplace!(sks_at_x::Vector{T}, basis::Vector{U}, sks_vks::Vector{T}, x::T, alpha::U) where {T, U <: BinaryElem}
+    num_subspaces = Int(log2(length(basis)))
+
+    # sks_at_x = Vector{T}(undef, num_subspaces)
+    sks_at_x[1] = x
+    for i in 2:num_subspaces
+        sks_at_x[i] = next_s(sks_at_x[i - 1], sks_vks[i - 1])
+    end
+
+    # basis = Vector{U}(undef, basis_len)
+    basis[1] = alpha
+    for i in 1:num_subspaces
+        basis_next_subspace!(basis, i - 1, sks_at_x[i])
+    end
+
+    return basis
+end
+
 
 function expand_ps!(p::Vector{T}, k::Int, sk_at_vk::T) where T
     current_len = 2^k
