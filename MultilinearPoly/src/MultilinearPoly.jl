@@ -23,7 +23,7 @@ function Base.sum(p::MultiLinearPoly)
 end
 
 # [Lemma 4.3. from: Proofs, Arguments, and Zero-Knowledge, Justin Thaler]
-function partial_eval(p::MultiLinearPoly{T}, rs::Vector{T}) where T <: BinaryElem
+function partial_eval(p::MultiLinearPoly{T}, rs::Vector{U}) where {T, U <: BinaryElem}
     partial_evals = parallel_partial_eval(p.evals, rs[1]) 
     n = length(partial_evals)
     for r in rs[2:end]
@@ -34,13 +34,13 @@ function partial_eval(p::MultiLinearPoly{T}, rs::Vector{T}) where T <: BinaryEle
     return MultiLinearPoly(partial_evals[1:n])
 end
 
-function parallel_partial_eval(evals::Vector{T}, r::T) where T <: BinaryElem
-    partial_evals = Vector{T}(undef, div(length(evals), 2))
+function parallel_partial_eval(evals::Vector{T}, r::U) where {T, U <: BinaryElem}
+    partial_evals = Vector{U}(undef, div(length(evals), 2))
     n = length(partial_evals)
 
     nt = Threads.nthreads() 
     chunk_size = ceil(Int, n / nt)
-    ONE = one(T)
+    ONE = one(U)
 
     Threads.@sync for t in 1:nt
         Threads.@spawn begin
@@ -55,7 +55,7 @@ function parallel_partial_eval(evals::Vector{T}, r::T) where T <: BinaryElem
     return partial_evals
 end
 
-function parallel_partial_eval_inplace!(evals::Vector{T}, n::Int, r::T) where T <: BinaryElem
+function parallel_partial_eval_inplace!(evals::Vector{T}, n::Int, r::T) where {T <: BinaryElem}
     nt = Threads.nthreads() 
     chunk_size = ceil(Int, n / nt)
     ONE = one(T)
@@ -71,36 +71,6 @@ function parallel_partial_eval_inplace!(evals::Vector{T}, n::Int, r::T) where T 
         end
     end
 end
-
-# [Lemma 4.3. from: Proofs, Arguments, and Zero-Knowledge, Justin Thaler] 
-function partial_eval(p::MultiLinearPoly{T}, r::Vector{U}) where {T, U <:BinaryElem}
-    if length(r) == 0
-        return p
-    end
-
-    partial_evals = Vector{U}(undef, div(length(p.evals), 2))
-    len = length(partial_evals)
-    ONE = one(U)
-
-    ri = r[1]
-    for i in 1:len
-        left = p.evals[i]
-        right = p.evals[i + len]
-        partial_evals[i] = (ONE + ri) * left + ri * right
-    end
-
-    for ri in r[2:end]
-        len = div(len, 2)
-
-        for i in 1:len
-            left = partial_evals[i]
-            right = partial_evals[i + len]
-            partial_evals[i] = (ONE + ri) * left + ri * right # original formula is -, in char 2 it's +
-        end
-    end
-    return MultiLinearPoly(partial_evals[1:len])
-end
-
 
 function partial_eval_at_0(p::MultiLinearPoly{T}) where T<:BinaryElem
     half = div(length(p.evals), 2)

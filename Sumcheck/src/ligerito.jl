@@ -1,3 +1,5 @@
+#TODO: Some functions can be further optimized but in context of Ligerito it has negligible impact
+
 using BinaryFields
 mutable struct SumcheckProverInstance{T<:BinaryElem}
     f::MultiLinearPoly{T}
@@ -32,11 +34,27 @@ function introduce_new!(inst::SumcheckProverInstance, bi::MultiLinearPoly{T}, h:
     return QuadraticEvals(s0, s1, s2)
 end
 
+function scale_evals_inplace!(evals::Vector{T}, alpha::T) where T
+    n = length(evals)
+    nt = Threads.nthreads()
+    chunk_size = ceil(Int, n / nt)
+
+    Threads.@sync for t in 1:nt
+        Threads.@spawn begin
+            start_idx = (t - 1) * chunk_size + 1
+            end_idx = min(t * chunk_size, n)
+
+            @inbounds for i in start_idx:end_idx
+                evals[i] *= alpha
+            end
+        end
+    end
+end
+
 function glue!(inst::SumcheckProverInstance{T}, alpha::T) where T
     @assert inst.to_be_glued !== nothing "No polynomial to glue!"
-    bi = inst.to_be_glued
-    g_evals = [gi * alpha for gi in bi.evals]
-    g = MultiLinearPoly(g_evals)
+    scale_evals_inplace!(inst.to_be_glued.evals, alpha)
+    g = MultiLinearPoly(inst.to_be_glued.evals)
     push!(inst.basis_polys, g)
     inst.to_be_glued = nothing
 end
@@ -65,9 +83,9 @@ function eval_01x_product(inst::SumcheckProverInstance{T}, x::T = T(3)) where T 
         b2s_sum .= b2s_sum .+ b2i
     end
 
-    s0 = sum(f0 .* b0s_sum)
-    s1 = sum(f1 .* b1s_sum)
-    s2 = sum(f2 .* b2s_sum)
+    s0 = f0' * b0s_sum
+    s1 = f1' * b1s_sum
+    s2 = f2' * b2s_sum
 
     return s0, s1, s2
 end
