@@ -8,4 +8,5 @@ BCCSHA = "aa8e919c-243c-51af-8825-aaa63cd721ce"
 SHA = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 
 [compat]
+BCCSHA = "0.7.0"
 SHA = "0.7.0"

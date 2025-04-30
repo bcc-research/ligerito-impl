@@ -2,11 +2,14 @@
 
 julia_version = "1.11.2"
 manifest_format = "2.0"
-project_hash = "c9d85a4c91680e1d836334f8d54f7348e523ed6d"
+project_hash = "9ec53ba4d5481717f0c36d4b8a2dce9b0b646669"
 
 [[deps.BinaryFields]]
 deps = ["Random", "SIMD"]
-path = "../BinaryFields"
+git-tree-sha1 = "018699e3d2d8f6b63ab50c9dc6cf76e18c008bb0"
+repo-rev = "main"
+repo-subdir = "BinaryFields"
+repo-url = "https://github.com/bcc-research/ligerito-impl.git"
 uuid = "0fee9d7f-8397-4f0d-9ec6-117db1666467"
 version = "0.1.0"
 
@@ -17,7 +20,10 @@ version = "1.11.0"
 
 [[deps.MultilinearPoly]]
 deps = ["BinaryFields"]
-path = "../MultilinearPoly"
+git-tree-sha1 = "ac2aef493b9e59f29faa651760d0343b78ebdc77"
+repo-rev = "main"
+repo-subdir = "MultilinearPoly"
+repo-url = "https://github.com/bcc-research/ligerito-impl.git"
 uuid = "738c1076-b784-4255-a602-5a9e144980bc"
 version = "0.1.0"
 
