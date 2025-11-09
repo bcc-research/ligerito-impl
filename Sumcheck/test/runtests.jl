@@ -22,21 +22,6 @@ function expand_evaluation_point(rs::Vector{T}) where T <: BinaryElem
     return current_layer
 end 
 
-function expand_basis(bs::Vector{T}) where T <: BinaryElem
-    expanded_basis = Vector{T}(undef, 2^length(bs))
-    expanded_basis[1] = one(T)
-    expanded_basis[2] = bs[1]
-
-    for i in 2:length(bs)
-        current_len = 2^(i - 1)
-        for j in 1:current_len
-            expanded_basis[j + current_len] = bs[i] * expanded_basis[j]
-        end
-    end
-
-    return expanded_basis
-end
-
 @testset "Kronecker basic test" begin
     T = BinaryElem32 
     n = 20
@@ -89,24 +74,25 @@ end
     T = BinaryElem32 
     n = 20
 
+    alpha = rand(T)
     r = rand(T, n)
     sks_vks = eval_sk_at_vks(2^n, T)
 
     t = T(rand(1:2^n - 1))
     sks_at_x = evaluate_sks_at_x(2^n, sks_vks, t)
 
-    full_eval = tensor_rs_basis_with_eq(sks_at_x, r)
+    full_eval = tensor_rs_basis_with_eq(sks_at_x, r, alpha)
 
-    # now let's partial evaluate on first k variables
+    # now let's partial evaluate on first 10 variables
     k = 10
-    r_partial = r[k+1:end]
-    basis_at_partial_r = partial_tensor_rs_basis_with_eq(sks_at_x, r_partial)
+    r_partial = r[1:k]
+    basis_at_partial_r = partial_tensor_rs_basis_with_eq(sks_at_x[k+1:end], r_partial, alpha)
 
-    rest_of_basis = expand_basis(sks_at_x[k+1:end])
+    rest_of_basis = expand_basis(sks_at_x[1:k])
     rest_of_basis .= basis_at_partial_r .* rest_of_basis
 
     poly = MultiLinearPoly(rest_of_basis)
-    final_eval = partial_eval(poly, r[1:k])
+    final_eval = partial_eval(poly, r[k+1:end])
     @assert length(final_eval.evals) == 1 "Final evaluation should be a single element"
     @assert full_eval == final_eval.evals[1] "Partial basis evaluation does not match full evaluation"
 end

@@ -287,6 +287,21 @@ function evaluate_basis(basis_len::Int, sks_vks::Vector{T}, x::T) where T
     return basis
 end
 
+function expand_basis(bs::Vector{T}) where T <: BinaryElem
+    expanded_basis = Vector{T}(undef, 2^length(bs))
+    expanded_basis[1] = one(T)
+    expanded_basis[2] = bs[1]
+
+    for i in 2:length(bs)
+        current_len = 2^(i - 1)
+        for j in 1:current_len
+            expanded_basis[j + current_len] = bs[i] * expanded_basis[j]
+        end
+    end
+
+    return expanded_basis
+end
+
 function evaluate_scaled_basis(basis_len::Int, sks_vks::Vector{T}, x::T, alpha::U) where {T, U <: BinaryElem}
     num_subspaces = Int(log2(basis_len))
 

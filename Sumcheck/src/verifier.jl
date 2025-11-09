@@ -30,7 +30,19 @@ function evaluate_poly(fd::FoldData{T}) where T<:BinaryElem
     if fd.beta != one(T)
         powers .= fd.beta * powers
     end
-    sum(tensor_rs_basis_with_eq(fd.sks_evaluations[i], fd.rs, powers[i]) for i in eachindex(fd.sks_evaluations))
+    n = length(fd.sks_evaluations[1])
+    rn = length(fd.rs)
+    leftover = n - rn
+    poly = expand_basis(fd.sks_evaluations[1][1:leftover])
+    partial_evaluation = partial_tensor_rs_basis_with_eq(fd.sks_evaluations[1][leftover+1:end], fd.rs, powers[1])
+    poly .= partial_evaluation .* poly
+
+    for i in 2:length(fd.sks_evaluations)
+        rest_of_basis = expand_basis(fd.sks_evaluations[i][1:leftover])
+        prt_eval = partial_tensor_rs_basis_with_eq(fd.sks_evaluations[i][leftover+1:end], fd.rs, powers[i])
+        poly .= poly .+ (prt_eval .* rest_of_basis)
+    end
+    return poly
 end
 
 mutable struct SumcheckVerifier{T}
@@ -108,30 +120,16 @@ function evaluate_basis_polys(verifier::SumcheckVerifier{T}, r::T) where T <: Bi
     for fold in verifier.folds
         add_r!(fold, r)
     end
-    return prod(evaluate_poly(fold) for fold in verifier.folds)
+    return sum(evaluate_poly.(verifier.folds))
 end
-
-# function verify(verifier::SumcheckVerifier{T}, r::T, f_eval::T) where T <: BinaryElem
-#     verifier.sum = eval_quadratic(verifier.running_poly, r)
-#     basis_evals = evaluate_basis_polys(verifier, r)
-#     return f_eval * basis_evals == verifier.sum
-# end
 
 function verify(verifier::SumcheckVerifier{T}, r::T, f_partial_eval::Vector{T}) where T <: BinaryElem
-    k = Int(log2(length(f_partial_eval)))
-
-    f_poly = MultiLinearPoly(f_partial_eval)
-    final_rs = vcat([r], rand(T, k - 1))
-    for ri in final_rs
-        for fold in verifier.folds
-            add_r!(fold, ri)
-        end
-        f_poly = partial_eval(f_poly, [ri])
-    end
     verifier.sum = eval_quadratic(verifier.running_poly, r)
+
     basis_evals = evaluate_basis_polys(verifier, r)
-    return f_poly.evals[1] * basis_evals == verifier.sum
+    return sum(f_partial_eval .* basis_evals) == verifier.sum
 end
 
 
-export FoldData, add_r!, evaluate_poly, SumcheckVerifier, fold!, introduce_new!, glue!, verify, new_fold!, start!
+export FoldData, add_r!, evaluate_poly, SumcheckVerifier, fold!
+export verifier_introduce_new!, glue!, verify, new_fold!, start!
