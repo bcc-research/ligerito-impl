@@ -257,6 +257,18 @@ function basis_next_subspace!(basis::Vector{U}, k::Int, sk_at_x::T) where {T, U 
     end
 end
 
+function evaluate_sks_at_x(basis_len::Int, sks_vks::Vector{T}, x::T) where T
+    num_subspaces = Int(log2(basis_len))
+
+    sks_at_x = Vector{T}(undef, num_subspaces)
+    sks_at_x[1] = x
+    for i in 2:num_subspaces
+        sks_at_x[i] = next_s(sks_at_x[i - 1], sks_vks[i - 1])
+    end
+
+    return sks_at_x
+end
+
 function evaluate_basis(basis_len::Int, sks_vks::Vector{T}, x::T) where T
     num_subspaces = Int(log2(basis_len))
 

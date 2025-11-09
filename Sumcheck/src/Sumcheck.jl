@@ -47,6 +47,7 @@ end
 
 include("./ligerito.jl")
 include("utils.jl")
+include("verifier.jl")
 
 #TODO: remove claimed_sum after testing
 function sumcheck_prover(f::MultiLinearPoly{T}, claimed_sum::T) where T<:BinaryElem
