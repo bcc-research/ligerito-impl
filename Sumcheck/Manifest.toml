@@ -2,7 +2,11 @@
 
 julia_version = "1.11.2"
 manifest_format = "2.0"
-project_hash = "9ec53ba4d5481717f0c36d4b8a2dce9b0b646669"
+project_hash = "947b23f90a7f812aafbadd48ff59c4a286b41f34"
+
+[[deps.Base64]]
+uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
+version = "1.11.0"
 
 [[deps.BinaryFields]]
 deps = ["Random", "SIMD"]
@@ -13,9 +17,29 @@ repo-url = "https://github.com/bcc-research/ligerito-impl.git"
 uuid = "0fee9d7f-8397-4f0d-9ec6-117db1666467"
 version = "0.1.0"
 
+[[deps.BinaryReedSolomon]]
+deps = ["BinaryFields"]
+path = "../BinaryReedSolomon"
+uuid = "8a283c49-c6d0-46c5-bbc1-5b2a51f34960"
+version = "0.1.0"
+
 [[deps.Dates]]
 deps = ["Printf"]
 uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
+version = "1.11.0"
+
+[[deps.InteractiveUtils]]
+deps = ["Markdown"]
+uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
+version = "1.11.0"
+
+[[deps.Logging]]
+uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
+version = "1.11.0"
+
+[[deps.Markdown]]
+deps = ["Base64"]
+uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 version = "1.11.0"
 
 [[deps.MultilinearPoly]]
@@ -59,10 +83,19 @@ git-tree-sha1 = "fea870727142270bdf7624ad675901a1ee3b4c87"
 uuid = "fdea26ae-647d-5447-a871-4b548cad5224"
 version = "3.7.1"
 
+[[deps.Serialization]]
+uuid = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
+version = "1.11.0"
+
 [[deps.TOML]]
 deps = ["Dates"]
 uuid = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 version = "1.0.3"
+
+[[deps.Test]]
+deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
+uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+version = "1.11.0"
 
 [[deps.Unicode]]
 uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
