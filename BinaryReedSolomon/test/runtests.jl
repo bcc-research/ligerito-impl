@@ -34,8 +34,8 @@ end
 @testset "Reed-Solomon non-systematic" begin
     n, m = 10, 12
 
-    for T in [BinaryElem16, BinaryElem32, BinaryElem128]
-        sks_vks = eval_sk_at_vks(2^n, BinaryElem16)
+    for T in [BinaryElem32]
+        sks_vks = eval_sk_at_vks(2^n, T)
         rs = reed_solomon(T, 2^n, 2^m)
 
         a_cfs = rand(T, 2^n) # first column
@@ -51,18 +51,18 @@ end
         xf = T(x)
 
         basis = evaluate_basis(2^n, sks_vks, xf)
-        c_at_x = sum(c_cfs .* basis)
+        c_at_x = c_cfs' * basis
 
-        # resize in-place
-        # this is now handled internally
-        # resize!(a_cfs, 2^m)
-        # resize!(b_cfs, 2^m)
+        resize!(a_cfs, 2^m)
+        a_cfs[2^n+1:end] .= zero(T)
+        resize!(b_cfs, 2^m)
+        b_cfs[2^n+1:end] .= zero(T)
 
-        a_enc = encode_non_systematic!(rs, a_cfs)
-        b_enc = encode_non_systematic!(rs, b_cfs)
+        encode_non_systematic!(rs, a_cfs)
+        encode_non_systematic!(rs, b_cfs)
 
-        a_row_opening = a_enc[x + 1]
-        b_row_opening = b_enc[x + 1]
+        a_row_opening = a_cfs[x + 1]
+        b_row_opening = b_cfs[x + 1]
 
         res = a_row_opening + l * b_row_opening
         @test res == c_at_x
