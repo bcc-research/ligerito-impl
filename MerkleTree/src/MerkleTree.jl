@@ -3,7 +3,7 @@ module MerkleTree
 using SHA, BCCSHA
 import Base: sizeof
 
-export build_merkle_tree, get_root, get_depth, build_merkle_tree_fast
+export build_merkle_tree, get_root, get_depth, build_merkle_tree_fast, build_merkle_tree_odd
 export CompleteMerkleTree, MerkleRoot, BatchedMerkleProof
 export prove, verify
 
@@ -86,6 +86,70 @@ function build_merkle_tree(leaves::AbstractArray)
                 @inbounds for i in start_idx:end_idx
                     src = curr_ptr + (2*(i-1))*32
                     unsafe_copyto!(buf_prt, src, 64)
+
+                    BCCSHA.update!(ctx, buf64)
+                    BCCSHA.digest_inplace!(next_ptr + (i-1)*32, ctx)
+                    reset_ctx!(ctx)
+                end
+            end
+        end
+
+        push!(layers, next_layer)
+
+        current_layer = next_layer
+        current_n = next_n
+    end
+
+    return CompleteMerkleTree(layers)
+end
+
+function build_merkle_tree_odd(leaves::AbstractArray)
+    if isempty(leaves)
+        return []
+    end
+
+    n = length(leaves)
+    lh = hash_array(leaves)
+    layers = [lh]
+
+    current_layer = lh
+    current_n = n
+
+    # Dummy hash - zeros
+    dummy_hash = zeros(UInt8, 32)
+
+    while current_n > 1
+        next_n = (current_n + 1) ÷ 2  # ceil div by 2
+        next_layer = Vector{UInt8}(undef, 32 * next_n)
+        next_ptr = pointer(next_layer)
+        curr_ptr = pointer(current_layer)
+
+        # Check if we need to pad with dummy
+        is_odd = (current_n % 2 == 1)
+
+        nt = Threads.nthreads()
+        chunk_size = ceil(Int, next_n / nt)
+
+        Threads.@sync for t in 1:nt
+            Threads.@spawn begin
+                ctx = BCCSHA.SHA256_CTX()
+                buf64 = Vector{UInt8}(undef, 64)
+                buf_prt = pointer(buf64)
+
+                start_idx = (t-1)*chunk_size + 1
+                end_idx = min(t*chunk_size, next_n)
+
+                @inbounds for i in start_idx:end_idx
+                    # Check if this is the last element and layer is odd
+                    if is_odd && i == next_n
+                        # Hash the last node with dummy
+                        src = curr_ptr + (2*(i-1))*32
+                        unsafe_copyto!(buf_prt, src, 32)
+                        unsafe_copyto!(buf_prt + 32, pointer(dummy_hash), 32)
+                    else
+                        src = curr_ptr + (2*(i-1))*32
+                        unsafe_copyto!(buf_prt, src, 64)
+                    end
 
                     BCCSHA.update!(ctx, buf64)
                     BCCSHA.digest_inplace!(next_ptr + (i-1)*32, ctx)

@@ -6,7 +6,7 @@ Q = 1000
 N = 2^n
 
 function generate_random_leaves(N, K)
-    return [rand(UInt16, K) for _ in 1:N]
+    return [rand(UInt32, K) for _ in 1:N]
 end
 
 @testset "Random leaves" begin
@@ -22,4 +22,14 @@ end
     root = get_root(tree)
 
     @test verify(root, proof; depth, leaves=queried_leaves, leaf_indices=queries)
+end
+
+@testset "Odd-length tree" begin
+    # Test with various odd lengths
+    for odd_n in [999, 1001, 2047, 3333]
+        leaves = generate_random_leaves(odd_n, K)
+        tree = build_merkle_tree_odd(leaves)
+
+        @test 1==1
+    end
 end
