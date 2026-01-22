@@ -1,0 +1,13 @@
+name = "Expander"
+uuid = "a159292e-7739-4583-8c0d-4c6163fbd591"
+authors = ["Andrija <akinovak@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+BinaryFields = "0fee9d7f-8397-4f0d-9ec6-117db1666467"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+
+[compat]
+Random = "1.11.0"
+StatsBase = "0.34.10"
